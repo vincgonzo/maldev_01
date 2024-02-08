@@ -34,13 +34,23 @@ int SearchForProcess(const char *processName) {
         return pid;
 }
 
+char pathToDLL[256] = "";
+
+void GetPathToDLL(){
+	GetCurrentDirectory(256, pathToDLL);
+	strcat(pathToDLL, "\\inject.dll");
+	printf("\nPath To DLL %s\n", pathToDLL);
+}
+
 
 int main(int argc, char *argv[]) {
 	
+	//char pathToDLL[]="C:\\Path\\to\\file\\to\\inject.dll";
+	GetPathToDLL(); // this replace the absolute path to DLL file
+
 	HANDLE hProcess;
 	PVOID pRemoteProcAllocMem;
 	PTHREAD_START_ROUTINE pLoadLibrary = NULL;
-	char pathToDLL[]="C:\\Path\\to\\file\\to\\inject.dll";
 	char processToInject[] = "explorer.exe"; // arbitrary choose the explorer process
 	int pid = 0;
 	
