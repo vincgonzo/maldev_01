@@ -15,7 +15,7 @@ std::vector<uint8_t> xor_encrypt(const std::vector<uint8_t>& shell, const std::v
 
 int main() {
     // XOR Key - It has to be the same in the Dropper for Decrypting
-    std::string key = "THMK3y123!";
+    std::string key = "HereisAXorKey!";
 
     // Convert Key into bytes
     std::vector<uint8_t> keyBytes(key.begin(), key.end());
