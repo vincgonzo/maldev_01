@@ -7,31 +7,29 @@
 
 
 int SearchForProcess(const char *processName) {
-
-        HANDLE hSnapshotOfProcesses;
-        PROCESSENTRY32 processStruct;
-        int pid = 0;
-                
-        hSnapshotOfProcesses = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (INVALID_HANDLE_VALUE == hSnapshotOfProcesses) return 0;
-                
-        processStruct.dwSize = sizeof(PROCESSENTRY32); 
-                
-        if (!Process32First(hSnapshotOfProcesses, &processStruct)) {
-                CloseHandle(hSnapshotOfProcesses);
-                return 0;
-        }
-                
-        while (Process32Next(hSnapshotOfProcesses, &processStruct)) {
-                if (lstrcmpiA(processName, processStruct.szExeFile) == 0) {
-                        pid = processStruct.th32ProcessID;
-                        break;
-                }
-        }
-                
-        CloseHandle(hSnapshotOfProcesses);
-                
-        return pid;
+	HANDLE hSnapshotOfProcesses;
+	PROCESSENTRY32 processStruct;
+	int pid = 0;
+			
+	hSnapshotOfProcesses = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (INVALID_HANDLE_VALUE == hSnapshotOfProcesses) return 0;
+			
+	processStruct.dwSize = sizeof(PROCESSENTRY32); 
+			
+	if (!Process32First(hSnapshotOfProcesses, &processStruct)) {
+		CloseHandle(hSnapshotOfProcesses);
+		return 0;
+	}
+			
+	while (Process32Next(hSnapshotOfProcesses, &processStruct)) {
+		if (lstrcmpiA(processName, processStruct.szExeFile) == 0) {
+			pid = processStruct.th32ProcessID;
+			break;
+		}
+	}
+	CloseHandle(hSnapshotOfProcesses);
+			
+	return pid;
 }
 
 char pathToDLL[256] = "";
@@ -44,7 +42,6 @@ void GetPathToDLL(){
 
 
 int main(int argc, char *argv[]) {
-	
 	//char pathToDLL[]="C:\\Path\\to\\file\\to\\inject.dll";
 	GetPathToDLL(); // this replace the absolute path to DLL file
 
@@ -62,9 +59,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	printf("Process To Inject PID: [ %d ]\nInjecting...", pid);
-
 	pLoadLibrary = (PTHREAD_START_ROUTINE) GetProcAddress( GetModuleHandle("Kernel32.dll"), "LoadLibraryA"); // to obfuscated ;)
-
 	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)(pid));
 
 	if (hProcess != NULL) {

